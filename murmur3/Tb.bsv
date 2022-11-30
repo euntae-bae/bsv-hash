@@ -12,7 +12,8 @@ module mkTb(Empty);
     Stmt stmt = seq
         acc.setSeed(1429907438);
         acc.setMsgAddress(0);
-        acc.setMsgLength(11);
+        //acc.setMsgLength(17);
+        acc.setMsgLength(736);  // lorem
 
         acc.start();
         //await(fifo.notEmpty() == False);

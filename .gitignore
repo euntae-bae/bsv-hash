@@ -1,9 +1,11 @@
 mkTb
+mk*
+model_*
+fnmemgen
+*_sw
 *.ba
 *.bo
 *.cxx
 *.o
 *.so
 *.v
-mkTb.h
-model_*

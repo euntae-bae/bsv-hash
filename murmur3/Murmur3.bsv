@@ -1,6 +1,7 @@
 package Murmur3;
 
 import StmtFSM::*;
+import fnlorem::*;
 // import ClientServer::*;
 // import Connectable::*;
 
@@ -44,16 +45,24 @@ function Bit#(32) fn_murmur_32_scramble(Bit#(32) k);
     return key;
 endfunction
 
-// Hello World
-// 48 65 6c 6c / 6f 20 57 6f / 72 6c 64 
-function Bit#(32) fn_mem_read(Bit#(64) addr, Bit#(64) len);
+/*
+// Hello HELLO World
+// 48 65 6C 6C 6F 20 48 45 4C 4C 4F 20 57 6F 72 6C 64
+// 메모리 데이터를 4바이트씩 반환
+function Bit#(32) fn_mem_read(Bit#(64) addr);
     return case (addr)
-        'h00: return 'h48656c6c;
-        'h04: return 'h6f20576f;
-        'h08: return 'h726c6400;
+        // first 12 bytes
+        'h00: return 'h48656C6C;
+        'h04: return 'h6F204845;
+        'h08: return 'h4C4C4F20;
+        // last 5 bytes
+        'h0c: return 'h576F726C;
+        'h10: return 'h64000000;
+        'h14: return 'h00000000;
         default: return 0;
     endcase;
 endfunction
+*/
 
 interface Murmur3_IFC;
     method Action start();
@@ -115,7 +124,7 @@ module mkMurmur3(Murmur3_IFC);
         // -> 레지스터에 4바이트 데이터가 리틀엔디안 순서로 저장된다.
         //await();
         while (rembyte >= 4) seq
-            memRead <= fn_mem_read(msgAddr, 4);
+            memRead <= fn_mem_read(msgAddr);
             key <= fn_convert_endian_32(memRead);
                 $display("key: %08x", key);
             action
@@ -136,7 +145,7 @@ module mkMurmur3(Murmur3_IFC);
 
         // rembyte가 4보다 작으면 메모리에 rembyte만큼 읽기 요청을 보낸다.
         // 응답이 오면 리틀 엔디안 순서로 key에 저장
-        memRead <= fn_mem_read(msgAddr, rembyte);
+        memRead <= fn_mem_read(msgAddr);
         key <= fn_convert_endian_32(memRead);
         $display("key: %08x", key);
 

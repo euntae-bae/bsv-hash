@@ -9,6 +9,7 @@ int main(void)
     uint8_t key[] = "Hello HELLO World";
     uint32_t hash = 0;
 
+    printf("key: %s\nlength: %lu\n\n", key, strlen(key));
     hash = jhash(key);
     printf("hash: %08x\n", hash); // hash: 769d8e63
 
