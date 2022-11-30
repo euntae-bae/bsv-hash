@@ -1,8 +1,8 @@
 package Murmur3;
 
 import StmtFSM::*;
-import ClientServer::*;
-import Connectable::*;
+// import ClientServer::*;
+// import Connectable::*;
 
 /*
 msg: 48 65 6c 6c 6f 20 57 6f 72 6c 64 
@@ -51,6 +51,7 @@ function Bit#(32) fn_mem_read(Bit#(64) addr, Bit#(64) len);
         'h00: return 'h48656c6c;
         'h04: return 'h6f20576f;
         'h08: return 'h726c6400;
+        default: return 0;
     endcase;
 endfunction
 

@@ -1,25 +1,16 @@
 #include <stdio.h>
 #include <string.h>
+#include "jhash.h"
 
-unsigned int jhash(void *key, int len) {
-	unsigned char *p = (unsigned char*)key;
-	unsigned int h = 8388617;   // 초기값
-
-	for (int i = 0; i < len; i++)
-	{
-		h = ( (h << 1 | h >> 30) & 0x7fffffff ) ^ p[i];
-        printf("[%02d] h=%d, p[%d]=%d\n", i, h, i, p[i]);
-	}
-	return h;
-}
-
-int main(int argc, char const *argv[])
+// Hello HELLO World
+// 48 65 6C 6C 6F 20 48 45 4C 4C 4F 20 57 6F 72 6C 64
+int main(void)
 {
-	int arr[] = { 12, 0, 23, 43, 230, 2 };
-    char msg[] = "Hello World";
+    uint8_t key[] = "Hello HELLO World";
+    uint32_t hash = 0;
 
-	printf("%#x\n", jhash(arr, 3));
-    printf("%#x\n", jhash(msg, strlen(msg)));
+    hash = jhash(key);
+    printf("hash: %08x\n", hash); // hash: 769d8e63
 
-	return 0;
+    return 0;
 }

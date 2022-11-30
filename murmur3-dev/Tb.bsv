@@ -1,6 +1,7 @@
 package Tb;
 
 import StmtFSM::*;
+import Vector::*;
 
 function Bit#(32) fn_convert_endian_32(Bit#(32) num);
     Bit#(32) result = { num[7:0], num[15:8], num[23:16], num[31:24] };
@@ -36,6 +37,42 @@ function Bit#(32) fn_murmur_32_scramble(Bit#(32) k);
     return key;
 endfunction
 
+function Vector#(3, Bit#(32)) fn_jhash_mix(Bit#(32) va, Bit#(32) vb, Bit#(32) vc);
+    Bit#(32) a = va;
+    Bit#(32) b = vb;
+    Bit#(32) c = vc;
+    Vector#(3, Bit#(32)) ret = newVector;
+
+    a = a - c;
+    a = a ^ fn_rol(c, 4);
+    c = c + b;
+
+    b = b - a;
+    b = b ^ fn_rol(a, 6);
+    a = a + c;
+
+    c = c - b;
+    c = c ^ fn_rol(b, 8);
+    b = b + a;
+
+    a = a - c;
+    a = a ^ fn_rol(c, 16);
+    c = c + b;
+
+    b = b - a;
+    b = b ^ fn_rol(a, 19);
+    a = a + c;
+
+    c = c - b;
+    c = c ^ fn_rol(b, 4);
+    b = b + a;
+
+    ret[0] = a;
+    ret[1] = b;
+    ret[2] = c;
+    return ret;
+endfunction
+
 (* synthesize *)
 module mkTb(Empty);
     Reg#(Bit#(32)) val <- mkReg(0);
@@ -60,6 +97,20 @@ module mkTb(Empty);
             hash <= h;
             val <= h;
         endaction
+        action
+            Vector#(3, Bit#(32)) abc = fn_jhash_mix(hash, 'h12345678, 'h30405060);
+            for (Integer i = 0; i < 3; i = i + 1)
+                $display("\tabc[%1d]=%08x", i, abc[i]);
+            val <= abc[0];
+        endaction
+        action
+            Vector#(3, Bit#(32)) abc = fn_jhash_mix(hash, 'h12345678, 'h30405060);
+            val <= abc[1];
+        endaction
+        action
+            Vector#(3, Bit#(32)) abc = fn_jhash_mix(hash, 'h12345678, 'h30405060);
+            val <= abc[2];
+        endaction
         val <= 'h636f7272;
         val <= 'h72726f63;
         val <= 'h6c6c6548;
@@ -73,9 +124,9 @@ module mkTb(Empty);
     // 이 rule은 매 사이클 실행되나?
     // => 그렇지 않음. fsm이 한 번 실행되면 끝나기 전까지 실행되지 않음
     // fsm의 seq 블록의 실행이 완료되면 rl_start가 다시 실행된다. 그러면 fsm.start() 역시 다시 호출된다.
-    rule rl_display_fsm_done;
-        $display("fsm.done: %d at %d", fsm.done, $time);
-    endrule
+    // rule rl_display_fsm_done;
+    //     $display("fsm.done: %d at %d", fsm.done, $time);
+    // endrule
     
     rule rl_start (!done);
         $display("rl_start at", $time);
