@@ -84,7 +84,9 @@ endinterface
 
 // murmur3.setseed
 // murmur3.setlen
-// murmur3.set
+// murmur3.hash rd
+// murmur3.hash rd rs1 rs2
+// INST rd rs1 rs2 31..25=0 14..12=0 6..2=0x02 1..0=3
 
 // murmur3.setseed seed(값이 저장된 레지스터)
 // murmur3 dest, src, len
@@ -167,16 +169,6 @@ module mkMurmur3(Murmur3_IFC);
     endseq;
 
     FSM fsm <- mkFSM(stmt);
-
-    // request FIFO가 empty가 아닐 때 실행
-    // rule rl_start;
-    //     //hash <= seed;
-    //     //rembyte <= msgLen;
-    //     fsm.start();
-    // endrule
-
-    // rule rl_done;
-    // endrule
 
     method Action start() if (fsm.done);
         fsm.start();
