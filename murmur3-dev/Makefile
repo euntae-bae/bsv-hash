@@ -20,4 +20,4 @@ clean:
 	rm *.bo
 	rm mk*
 	rm model_*
-	fnmemgen
+	rm fnmemgen

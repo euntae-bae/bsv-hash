@@ -74,9 +74,9 @@ int main(void) {
     srand(time(NULL));
     //uint32_t s = rand();
     uint32_t s = 1429907438;
-    //uint8_t key[] = "Hello HELLO World";
+    uint8_t key[] = "Hello HELLO World";
     // a3abf529
-    uint8_t key[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris cursus ipsum ac justo vestibulum dapibus. Donec sagittis mollis tempor. Integer consectetur ipsum tellus, sed convallis felis eleifend at. Ut eu mi elit. Suspendisse gravida faucibus tellus consectetur tempus. Aenean nec ligula vel arcu ultricies faucibus non eu purus. Integer tempor tellus sit amet tincidunt maximus. In vestibulum nibh metus, ac posuere metus blandit vitae. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer elementum erat et sodales sollicitudin. Nullam eget odio lectus. Etiam iaculis orci libero. Vivamus aliquet ante et dui aliquet, eu elementum massa sodales. Pellentesque sodales est a nisl consectetur, id porttitor massa pretium.";
+    //uint8_t key[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris cursus ipsum ac justo vestibulum dapibus. Donec sagittis mollis tempor. Integer consectetur ipsum tellus, sed convallis felis eleifend at. Ut eu mi elit. Suspendisse gravida faucibus tellus consectetur tempus. Aenean nec ligula vel arcu ultricies faucibus non eu purus. Integer tempor tellus sit amet tincidunt maximus. In vestibulum nibh metus, ac posuere metus blandit vitae. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer elementum erat et sodales sollicitudin. Nullam eget odio lectus. Etiam iaculis orci libero. Vivamus aliquet ante et dui aliquet, eu elementum massa sodales. Pellentesque sodales est a nisl consectetur, id porttitor massa pretium.";
     size_t len = strlen(key);
     printf("msg: "); displayHexMsg(key, len);
     printf("seed: %u\n", s);

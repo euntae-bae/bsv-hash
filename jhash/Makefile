@@ -1,5 +1,5 @@
 SRC_NAME=Tb.bsv
-all: mkTb mkTb.v jhash_sw
+all: mkTb mkTb.v mkJhash.v jhash_sw
 
 mkTb: mkTb.ba
 	bsc -sim -o mkTb -e mkTb mkTb.ba

@@ -112,16 +112,18 @@ function Bit#(32) fn_mem_read(Bit#(64) addr);
 endfunction
 
 interface Jhash_IFC;
-    method Action start();
-    method Bool done;
+    method Action init(Bit#(32) iv, Bit#(32) len);
+    method Action loadv0(Bit#(32) msgChunk); // copy 4 byte message chunk into vecMemRead[0]
+    method Action loadv1(Bit#(32) msgChunk); // copy 4 byte message chunk into vecMemRead[1]
+    method Action loadv2(Bit#(32) msgChunk); // copy 4 byte message chunk into vecMemRead[2]
+    method Action step;
     method Bit#(32) result;
-    method Action setMsgAddress(Bit#(64) addr);
-    method Action setMsgLength(Bit#(32) len);
-    method Action setInitval(Bit#(32) val);
 endinterface
 
+// rdsize
+
+(* synthesize *)
 module mkJhash(Jhash_IFC);
-    Reg#(Bit#(64)) msgAddr  <- mkReg(0);
     Reg#(Bit#(32)) msgLen   <- mkReg(0);
 
     Vector#(3, Reg#(Bit#(32))) vecMemRead <- replicateM(mkReg(0));
@@ -134,102 +136,82 @@ module mkJhash(Jhash_IFC);
 
     /* constants */
     Bit#(32) c_jhash_initval    = 'hdeadbeef;
-    Bit#(32) c_initval          = 'hdeadbeea;
+    //Bit#(32) c_initval          = 'hdeadbeea;
 
-    Stmt stmt = seq
+    method Action init(Bit#(32) iv, Bit#(32) len);
         action
-            //setInitval(c_initval);
-            initval <= c_initval;
-            rembyte <= msgLen;
-        endaction
-
-        action
-            Bit#(32) initialValue = c_jhash_initval + msgLen + initval;
+            Bit#(32) initialValue = c_jhash_initval + len + iv;
+            msgLen <= len;
+            rembyte <= len;
             a <= initialValue;
             b <= initialValue;
             c <= initialValue;
+            vecMemRead[0] <= 0;
+            vecMemRead[1] <= 0;
+            vecMemRead[2] <= 0;
+            hash <= 0;
+            $display("initialValue=%08x", initialValue);
         endaction
+    endmethod
 
-        // 12바이트(3워드)씩 읽어서 처리
-        // all but the last block: affect some 32 bits of (a, b, c)
-        while (rembyte > 12) seq
-            // 32비트 레지스터에 저장할 때 리틀 엔디안 바이트 순서로 뒤집어서 저장해야 하나?
-            // --> 리틀 엔디안으로 저장해야 한다.
-            vecMemRead[0] <= fn_convert_endian_32(fn_mem_read(msgAddr));
-            vecMemRead[1] <= fn_convert_endian_32(fn_mem_read(msgAddr+4));
-            vecMemRead[2] <= fn_convert_endian_32(fn_mem_read(msgAddr+8));
-            action
-                a <= a + vecMemRead[0];
-                b <= b + vecMemRead[1];
-                c <= c + vecMemRead[2];
-                $display("a=%08x", a + vecMemRead[0]);
-                $display("b=%08x", b + vecMemRead[1]);
-                $display("c=%08x", c + vecMemRead[2]);
-            endaction
+    method Action loadv0(Bit#(32) msgChunk);
+        vecMemRead[0] <= msgChunk;
+    endmethod
 
-            action
-                Vector#(3, Bit#(32)) abc = fn_jhash_mix(a, b, c);
-                a <= abc[0];
-                b <= abc[1];
-                c <= abc[2];
-                rembyte <= rembyte - 12;
-                msgAddr <= msgAddr + 12;
-                $display("a=%08x", abc[0]);
-                $display("b=%08x", abc[1]);
-                $display("c=%08x", abc[2]);
-            endaction
-        endseq
+    method Action loadv1(Bit#(32) msgChunk);
+        vecMemRead[1] <= msgChunk;
+    endmethod
 
-        // last block: affect all 32 bits of (c)
-        // all the case statements fall through
-        action
-            vecMemRead[0] <= fn_convert_endian_32(fn_mem_read(msgAddr));
-            vecMemRead[1] <= fn_convert_endian_32(fn_mem_read(msgAddr + 4));
-            vecMemRead[2] <= fn_convert_endian_32(fn_mem_read(msgAddr + 8));
-        endaction
+    method Action loadv2(Bit#(32) msgChunk);
+        vecMemRead[2] <= msgChunk;
+    endmethod
 
-        if (rembyte > 0) action
-            c <= c + vecMemRead[2];
-            b <= b + vecMemRead[1];
-            a <= a + vecMemRead[0];
-        endaction
-
-        action
-            Vector#(3, Bit#(32)) abc = fn_jhash_final(a, b, c);
-            //a <= abc[0];
-            //b <= abc[1];
+    method Action step;
+        if (rembyte > 12) action
+            // 4바이트 단위 메시지 청크들은 각각 리틀 엔디안 순서로 레지스터에 저장되어 있어야 한다.
+            Bit#(32) va = a + vecMemRead[0];
+            Bit#(32) vb = b + vecMemRead[1];
+            Bit#(32) vc = c + vecMemRead[2];
+            Vector#(3, Bit#(32)) abc = fn_jhash_mix(va, vb, vc);
+            a <= abc[0];
+            b <= abc[1];
             c <= abc[2];
+            rembyte <= rembyte - 12;
+            $display("memRead0=%08x", vecMemRead[0]);
+            $display("memRead1=%08x", vecMemRead[1]);
+            $display("memRead2=%08x", vecMemRead[2]);
+
             $display("a=%08x", abc[0]);
             $display("b=%08x", abc[1]);
             $display("c=%08x", abc[2]);
         endaction
-        hash <= c;
-    endseq;
 
-    FSM fsm <- mkFSM(stmt);
+        // last block
+        else action
+            Bit#(32) va = a;
+            Bit#(32) vb = b;
+            Bit#(32) vc = c;
 
-    method Action start();
-        fsm.start();
+            if (rembyte > 0) begin
+                vc = vc + vecMemRead[2];
+                vb = vb + vecMemRead[1];
+                va = va + vecMemRead[0];
+            end
+
+            $display("memRead0=%08x", vecMemRead[0]);
+            $display("memRead1=%08x", vecMemRead[1]);
+            $display("memRead2=%08x", vecMemRead[2]);
+
+            Vector#(3, Bit#(32)) abc = fn_jhash_final(va, vb, vc);
+            hash <= abc[2];
+            $display("a=%08x", abc[0]);
+            $display("b=%08x", abc[1]);
+            $display("c=%08x", abc[2]);
+        endaction
     endmethod
 
-    method Bool done;
-        return fsm.done;
-    endmethod
-
-    method Bit#(32) result if (fsm.done);
+    method Bit#(32) result;
         return hash;
-    endmethod
-
-    method Action setMsgAddress(Bit#(64) addr) if (fsm.done);
-        msgAddr <= addr;
-    endmethod
-
-    method Action setMsgLength(Bit#(32) len) if (fsm.done);
-        msgLen <= len;
-    endmethod
-
-    method Action setInitval(Bit#(32) val);
-        initval <= val;
     endmethod
 endmodule
 

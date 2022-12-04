@@ -20,3 +20,4 @@ clean:
 	rm *.bo
 	rm mk*
 	rm model_*
+	rm murmur_sw
