@@ -32,9 +32,9 @@ module mkTb(Empty);
         acc.init(c_initval, c_msglen);
 
         while (remByte > 12) seq
-            memRead0 <= zeroExtend(fn_convert_endian_32(fn_mem_read(msgAddr)));
-            memRead1 <= zeroExtend(fn_convert_endian_32(fn_mem_read(msgAddr + 4)));
-            memRead2 <= zeroExtend(fn_convert_endian_32(fn_mem_read(msgAddr + 8)));
+            memRead0 <= zeroExtend((fn_mem_read(msgAddr)));
+            memRead1 <= zeroExtend((fn_mem_read(msgAddr + 4)));
+            memRead2 <= zeroExtend((fn_mem_read(msgAddr + 8)));
 
             acc.loadv0(truncate(memRead0));
             acc.loadv1(truncate(memRead1));
@@ -47,9 +47,9 @@ module mkTb(Empty);
             endaction
         endseq
 
-        memRead0 <= zeroExtend(fn_convert_endian_32(fn_mem_read(msgAddr)));
-        memRead1 <= zeroExtend(fn_convert_endian_32(fn_mem_read(msgAddr + 4)));
-        memRead2 <= zeroExtend(fn_convert_endian_32(fn_mem_read(msgAddr + 8)));
+        memRead0 <= zeroExtend((fn_mem_read(msgAddr)));
+        memRead1 <= zeroExtend((fn_mem_read(msgAddr + 4)));
+        memRead2 <= zeroExtend((fn_mem_read(msgAddr + 8)));
 
         acc.loadv0(truncate(memRead0));
         acc.loadv1(truncate(memRead1));

@@ -1,6 +1,5 @@
 package Jhash;
 
-import StmtFSM::*;
 import Vector::*;
 
 function Bit#(32) fn_convert_endian_32(Bit#(32) num);
@@ -118,9 +117,11 @@ interface Jhash_IFC;
     method Action loadv2(Bit#(32) msgChunk); // copy 4 byte message chunk into vecMemRead[2]
     method Action step;
     method Bit#(32) result;
+    /* for debug instructions jhash.rdv0-2 */
+    method Bit#(32) rdv0;
+    method Bit#(32) rdv1;
+    method Bit#(32) rdv2;
 endinterface
-
-// rdsize
 
 (* synthesize *)
 module mkJhash(Jhash_IFC);
@@ -133,41 +134,44 @@ module mkJhash(Jhash_IFC);
     Reg#(Bit#(32)) c        <- mkReg(0);
     Reg#(Bit#(32)) rembyte  <- mkReg(0);
     Reg#(Bit#(32)) hash     <- mkReg(0);
+    Reg#(Bit#(2))  pendCnt  <- mkReg(3);
 
     /* constants */
     Bit#(32) c_jhash_initval    = 'hdeadbeef;
     //Bit#(32) c_initval          = 'hdeadbeea;
 
     method Action init(Bit#(32) iv, Bit#(32) len);
-        action
-            Bit#(32) initialValue = c_jhash_initval + len + iv;
-            msgLen <= len;
-            rembyte <= len;
-            a <= initialValue;
-            b <= initialValue;
-            c <= initialValue;
-            vecMemRead[0] <= 0;
-            vecMemRead[1] <= 0;
-            vecMemRead[2] <= 0;
-            hash <= 0;
-            $display("initialValue=%08x", initialValue);
-        endaction
+        Bit#(32) initialValue = c_jhash_initval + len + iv;
+        msgLen <= len;
+        rembyte <= len;
+        a <= initialValue;
+        b <= initialValue;
+        c <= initialValue;
+        vecMemRead[0] <= 0;
+        vecMemRead[1] <= 0;
+        vecMemRead[2] <= 0;
+        hash <= 0;
+        pendCnt <= 3;
+        $display("initialValue=%08x", initialValue);
     endmethod
 
     method Action loadv0(Bit#(32) msgChunk);
-        vecMemRead[0] <= msgChunk;
+        vecMemRead[0] <= fn_convert_endian_32(msgChunk);
+        pendCnt <= pendCnt - 1;
     endmethod
 
     method Action loadv1(Bit#(32) msgChunk);
-        vecMemRead[1] <= msgChunk;
+        vecMemRead[1] <= fn_convert_endian_32(msgChunk);
+        pendCnt <= pendCnt - 1;
     endmethod
 
     method Action loadv2(Bit#(32) msgChunk);
-        vecMemRead[2] <= msgChunk;
+        vecMemRead[2] <= fn_convert_endian_32(msgChunk);
+        pendCnt <= pendCnt - 1;
     endmethod
 
-    method Action step;
-        if (rembyte > 12) action
+    method Action step if (pendCnt == 0);
+        if (rembyte > 12) begin
             // 4바이트 단위 메시지 청크들은 각각 리틀 엔디안 순서로 레지스터에 저장되어 있어야 한다.
             Bit#(32) va = a + vecMemRead[0];
             Bit#(32) vb = b + vecMemRead[1];
@@ -184,10 +188,10 @@ module mkJhash(Jhash_IFC);
             $display("a=%08x", abc[0]);
             $display("b=%08x", abc[1]);
             $display("c=%08x", abc[2]);
-        endaction
+        end
 
         // last block
-        else action
+        else begin
             Bit#(32) va = a;
             Bit#(32) vb = b;
             Bit#(32) vc = c;
@@ -207,11 +211,25 @@ module mkJhash(Jhash_IFC);
             $display("a=%08x", abc[0]);
             $display("b=%08x", abc[1]);
             $display("c=%08x", abc[2]);
-        endaction
+        end
+
+        pendCnt <= 3;
     endmethod
 
     method Bit#(32) result;
         return hash;
+    endmethod
+
+    method Bit#(32) rdv0;
+        return vecMemRead[0];
+    endmethod
+
+    method Bit#(32) rdv1;
+        return vecMemRead[1];
+    endmethod
+
+    method Bit#(32) rdv2;
+        return vecMemRead[2];
     endmethod
 endmodule
 

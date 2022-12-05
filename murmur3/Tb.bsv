@@ -32,20 +32,21 @@ module mkTb(Empty);
 
         while (remByte >= 4) seq
             //$display("memRead: %08x", fn_mem_read(msgAddr));
-            memRead <= zeroExtend(fn_convert_endian_32(fn_mem_read(msgAddr)));
+            memRead <= zeroExtend(fn_convert_endian_32(fn_mem_read(msgAddr))); // == memcpy(&chunk, msgaddr, sizeof(uint32_t));
             action
                 $display("memRead(%04x): %016x", msgAddr, memRead);
                 acc.load(truncate(memRead), 4);
             endaction
             action
                 acc.step;
+                $display("hash: %08x", acc.result);
                 msgAddr <= msgAddr + 4;
                 remByte <= remByte - 4;
             endaction
         endseq
 
         // finalize
-        memRead <= zeroExtend(fn_convert_endian_32(fn_mem_read(msgAddr)));
+        memRead <= zeroExtend((fn_mem_read(msgAddr)));  // big-endian (리틀 엔디안으로의 변환은 mkMurmur3에서 수행)
         action
             $display("memRead(%04x): %016x", msgAddr, memRead);
             acc.load(truncate(memRead), remByte);
