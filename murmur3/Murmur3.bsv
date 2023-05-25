@@ -128,7 +128,7 @@ module mkMurmur3(Murmur3_IFC);
         while (rembyte >= 4) seq
             memRead <= fn_mem_read(msgAddr);
             key <= fn_convert_endian_32(memRead);
-                $display("key: %08x", key);
+                //$display("key: %08x", key);
             action
                 key <= fn_convert_endian_32(memRead);
                 msgAddr <= msgAddr + 4;
@@ -141,7 +141,7 @@ module mkMurmur3(Murmur3_IFC);
                 h = fn_rol(h, 13);
                 h = (h * m) + n;
                 hash <= h;
-                    $display("h: %08x", h);
+                    //$display("h: %08x", h);
             endaction
         endseq
 
@@ -149,7 +149,7 @@ module mkMurmur3(Murmur3_IFC);
         // 응답이 오면 리틀 엔디안 순서로 key에 저장
         memRead <= fn_mem_read(msgAddr);
         key <= fn_convert_endian_32(memRead);
-        $display("key: %08x", key);
+        //$display("key: %08x", key);
 
         action
             Bit#(32) k = fn_murmur_32_scramble(key);

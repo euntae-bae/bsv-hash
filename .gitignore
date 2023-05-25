@@ -9,3 +9,5 @@ fnmemgen
 *.o
 *.so
 *.v
+ase128sw
+sbox
